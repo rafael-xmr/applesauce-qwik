@@ -18,10 +18,13 @@ export function useFactory(): EventFactory | undefined {
 
 /** Provides an EventFactory to the app. */
 export function useFactoryProvider(factory: Signal<EventFactory | undefined>) {
-	useVisibleTask$((_) => {
-		factory.value = new EventFactory();
-		console.log("Factory initialized", factory.value);
-	});
+	useVisibleTask$(
+		(_) => {
+			factory.value = new EventFactory();
+			console.log("Factory initialized", factory.value);
+		},
+		{ strategy: "document-ready" },
+	);
 
 	useContextProvider(FactoryContext, factory);
 }

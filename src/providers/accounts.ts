@@ -21,10 +21,13 @@ export function useAccountManager(): AccountManager | undefined {
 export function useAccountsProvider(
 	accounts: Signal<AccountManager | undefined>,
 ) {
-	useVisibleTask$((_) => {
-		accounts.value = new AccountManager();
-		console.log("Accounts initialized", accounts.value);
-	});
+	useVisibleTask$(
+		(_) => {
+			accounts.value = new AccountManager();
+			console.log("Accounts initialized", accounts.value);
+		},
+		{ strategy: "document-ready" },
+	);
 
 	useContextProvider(AccountsContext, accounts);
 }

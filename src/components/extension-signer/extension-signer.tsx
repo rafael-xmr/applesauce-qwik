@@ -1,8 +1,7 @@
-import { component$, useSignal, useVisibleTask$ } from "@builder.io/qwik";
-import { useExtensionSigner } from "../../hooks/use-extension-signin";
+import { $, component$, useSignal, useVisibleTask$ } from "@qwik.dev/core";
 import { useActiveAccount } from "../../hooks/use-active-account";
+import { useExtensionSigner } from "../../hooks/use-extension-signin";
 import { useAccountManager } from "../../providers/accounts";
-import { $ } from "@qwik.dev/core";
 
 export const ExtensionSigner = component$(() => {
 	const manager = useAccountManager();
@@ -12,9 +11,12 @@ export const ExtensionSigner = component$(() => {
 
 	const activeAccount = useActiveAccount();
 
-	useVisibleTask$(() => {
-		hasExtension.value = !!window.nostr;
-	});
+	useVisibleTask$(
+		() => {
+			hasExtension.value = !!window.nostr;
+		},
+		{ strategy: "document-ready" },
+	);
 
 	const signout = $(() => {
 		if (manager?.active) {

@@ -1,15 +1,13 @@
-import { Counter } from "./components/counter/counter";
-import { ExtensionSigner } from "./components/extension-signer/extension-signer";
-import { Logo } from "./components/logo/logo";
 import { component$, useSignal } from "@qwik.dev/core";
-import { useEventStoreProvider } from "./providers/event-store";
-import { useFactoryProvider } from "./providers/factory";
-import { useAccountsProvider } from "./providers/accounts";
-import { useActionHubProvider } from "./providers/actions";
-import type { IEventStore } from "applesauce-core";
-import type { EventFactory } from "applesauce-factory";
 import type { AccountManager } from "applesauce-accounts";
 import type { ActionHub } from "applesauce-actions";
+import type { IEventStore } from "applesauce-core";
+import type { EventFactory } from "applesauce-factory";
+import { ExtensionSigner } from "./components/extension-signer/extension-signer";
+import { useAccountsProvider } from "./providers/accounts";
+import { useActionHubProvider } from "./providers/actions";
+import { useEventStoreProvider } from "./providers/event-store";
+import { useFactoryProvider } from "./providers/factory";
 
 export const App = component$(() => {
 	const eventStore = useSignal<IEventStore | undefined>();
@@ -29,8 +27,6 @@ export const App = component$(() => {
 
 	return (
 		<>
-			<Logo />
-			<Counter />
 			<ExtensionSigner />
 		</>
 	);

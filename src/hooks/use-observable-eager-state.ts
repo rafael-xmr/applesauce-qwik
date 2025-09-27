@@ -1,4 +1,4 @@
-import { useSignal, useVisibleTask$, type NoSerialize } from "@builder.io/qwik";
+import { type NoSerialize, useSignal, useTask$ } from "@qwik.dev/core";
 import type { Observable } from "rxjs";
 
 /**
@@ -47,7 +47,7 @@ export function useObservableEagerState<TState>(
 		return initialState!;
 	});
 
-	useVisibleTask$(({ track, cleanup }) => {
+	useTask$(({ track, cleanup }) => {
 		// Track the observable instance. If it changes, this task will re-run.
 		track(() => state$);
 

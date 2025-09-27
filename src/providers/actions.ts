@@ -24,12 +24,15 @@ export function useActionHubProvider(
 	factory: Signal<EventFactory | undefined>,
 	actionHub: Signal<ActionHub | undefined>,
 ) {
-	useVisibleTask$((_) => {
-		if (eventStore.value && factory.value) {
-			actionHub.value = new ActionHub(eventStore.value, factory.value);
-			console.log("ActionHub initialized", actionHub.value);
-		}
-	});
+	useVisibleTask$(
+		(_) => {
+			if (eventStore.value && factory.value) {
+				actionHub.value = new ActionHub(eventStore.value, factory.value);
+				console.log("ActionHub initialized", actionHub.value);
+			}
+		},
+		{ strategy: "document-ready" },
+	);
 
 	useContextProvider(ActionsContext, actionHub);
 }

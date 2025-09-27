@@ -1,4 +1,4 @@
-import { useSignal } from "@builder.io/qwik";
+import { useSignal } from "@qwik.dev/core";
 
 export function useAsyncAction<T, Args extends any[]>(
 	fn: (...args: Args) => Promise<T>,

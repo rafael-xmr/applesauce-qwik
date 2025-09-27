@@ -22,10 +22,13 @@ export function useEventStore(): IEventStore | undefined {
 export function useEventStoreProvider(
 	eventStore: Signal<IEventStore | undefined>,
 ) {
-	useVisibleTask$((_) => {
-		eventStore.value = new EventStore();
-		console.log("EventStore initialized", eventStore.value);
-	});
+	useVisibleTask$(
+		(_) => {
+			eventStore.value = new EventStore();
+			console.log("EventStore initialized", eventStore.value);
+		},
+		{ strategy: "document-ready" },
+	);
 
 	useContextProvider(EventStoreContext, eventStore);
 }
