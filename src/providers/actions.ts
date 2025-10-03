@@ -1,13 +1,15 @@
 import {
 	createContextId,
+	noSerialize,
 	type Signal,
 	useContext,
 	useContextProvider,
-	useVisibleTask$,
+	useSignal,
+	useTask$,
 } from "@qwik.dev/core";
 import { ActionHub } from "applesauce-actions";
-import type { IEventStore } from "applesauce-core";
-import type { EventFactory } from "applesauce-factory";
+import { EventStoreContext } from "./event-store";
+import { FactoryContext } from "./factory";
 
 export const ActionsContext =
 	createContextId<Signal<ActionHub>>("applesauce.actions");
@@ -19,20 +21,20 @@ export function useActionHub(): ActionHub | undefined {
 }
 
 /** Provides an ActionsContext to the app. */
-export function useActionHubProvider(
-	eventStore: Signal<IEventStore | undefined>,
-	factory: Signal<EventFactory | undefined>,
-	actionHub: Signal<ActionHub | undefined>,
-) {
-	useVisibleTask$(
-		(_) => {
-			if (eventStore.value && factory.value) {
-				actionHub.value = new ActionHub(eventStore.value, factory.value);
-				console.log("ActionHub initialized", actionHub.value);
-			}
-		},
-		{ strategy: "document-ready" },
-	);
+export function useActionHubProvider() {
+	const actionHub = useSignal<ActionHub | undefined>();
+	const eventStore = useContext(EventStoreContext);
+	const factory = useContext(FactoryContext);
+
+	useTask$(({ track }) => {
+		const newEventStore = track(eventStore);
+		const newFactory = track(factory);
+		if (!newEventStore || !newFactory) return;
+
+		actionHub.value = noSerialize(
+			new ActionHub(eventStore.value, factory.value),
+		);
+	});
 
 	useContextProvider(ActionsContext, actionHub);
 }

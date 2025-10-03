@@ -53,3 +53,23 @@ This tells bundlers that the module [has no side effects](https://webpack.js.org
 Consequently, to maintain the integrity of tree-shaking optimizations, please ensure your code truly contains no side effects (such as modifying global variables or the DOM upon import).<br/>
 If your module does introduce side effects, remove "sideEffects": false or specify the specific files with side effects.<br/>
 Be sure to only remove it from the specific file where the global is being set. Finally, verify that your build continues to function as expected after making any adjustments to the sideEffects setting.
+
+## Express Server
+
+This app has a minimal [Express server](https://expressjs.com/) implementation. After running a full build, you can preview the build using the command:
+
+```
+bun serve
+```
+
+Then visit [http://localhost:8080/](http://localhost:8080/)
+
+## Express Server
+
+This app has a minimal [Express server](https://expressjs.com/) implementation. After running a full build, you can preview the build using the command:
+
+```
+bun serve
+```
+
+Then visit [http://localhost:8080/](http://localhost:8080/)

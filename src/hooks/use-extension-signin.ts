@@ -1,7 +1,7 @@
-import { ExtensionSigner } from "applesauce-signers";
-import { useAsyncAction } from "./use-async-action";
 import { ExtensionAccount } from "applesauce-accounts/accounts";
-import { useAccountManager } from "../providers/accounts";
+import { ExtensionSigner } from "applesauce-signers";
+import { useAccountManager } from "../providers/account-manager";
+import { useAsyncAction } from "./use-async-action";
 
 export function useExtensionSigner() {
 	const manager = useAccountManager();

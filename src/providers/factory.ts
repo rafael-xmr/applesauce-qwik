@@ -1,11 +1,14 @@
 import {
 	createContextId,
+	noSerialize,
 	type Signal,
 	useContext,
 	useContextProvider,
-	useVisibleTask$,
+	useSignal,
+	useTask$,
 } from "@qwik.dev/core";
 import { EventFactory } from "applesauce-factory";
+import { EventStoreContext } from "./event-store";
 
 export const FactoryContext =
 	createContextId<Signal<EventFactory>>("applesauce.factory");
@@ -17,14 +20,16 @@ export function useFactory(): EventFactory | undefined {
 }
 
 /** Provides an EventFactory to the app. */
-export function useFactoryProvider(factory: Signal<EventFactory | undefined>) {
-	useVisibleTask$(
-		(_) => {
-			factory.value = new EventFactory();
-			console.log("Factory initialized", factory.value);
-		},
-		{ strategy: "document-ready" },
-	);
+export function useFactoryProvider() {
+	const factory = useSignal<EventFactory | undefined>();
+	const eventStore = useContext(EventStoreContext);
+
+	useTask$(({ track }) => {
+		const newEventStore = track(eventStore);
+		if (!newEventStore) return;
+
+		factory.value = noSerialize(new EventFactory());
+	});
 
 	useContextProvider(FactoryContext, factory);
 }

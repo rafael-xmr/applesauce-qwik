@@ -1,4 +1,9 @@
-import { type NoSerialize, useSignal, useTask$ } from "@qwik.dev/core";
+import {
+	type NoSerialize,
+	type Signal,
+	useSignal,
+	useTask$,
+} from "@qwik.dev/core";
 import type { Observable } from "rxjs";
 
 /**
@@ -22,6 +27,7 @@ import type { Observable } from "rxjs";
  */
 export function useObservableEagerState<TState>(
 	state$: NoSerialize<Observable<TState>> | Observable<TState>,
+	trackOverride?: Signal<NoSerialize<Observable<TState>> | Observable<TState>>,
 ): TState {
 	const errorSignal = useSignal<Error | null>(null);
 	const didSyncEmit = useSignal(false);
@@ -49,14 +55,14 @@ export function useObservableEagerState<TState>(
 
 	useTask$(({ track, cleanup }) => {
 		// Track the observable instance. If it changes, this task will re-run.
-		track(() => state$);
+		const newState$ = track(() => trackOverride?.value ?? state$);
 
-		if (!state$) {
+		if (!newState$) {
 			return;
 		}
 
 		// Subscribe to the observable for updates.
-		const subscription = state$.subscribe({
+		const subscription = newState$.subscribe({
 			next: (value) => {
 				// Qwik signals automatically prevent unnecessary re-renders
 				// if the new value is the same as the old one.
