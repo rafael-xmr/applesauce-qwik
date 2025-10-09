@@ -20,11 +20,10 @@ import type { Observable } from "rxjs";
  *
  * @returns The latest value from the observable signal.
  */
-export function useObservableEagerState<TState>(
+export function useObservableState<TState>(
 	state$: NoSerialize<Observable<TState>>,
 ) {
 	const errorSignal = useSignal<Error | null>(null);
-	const didSyncEmit = useSignal(false);
 
 	const stateSignal = useSignal<TState | undefined>(() => {
 		if (!state$) {
@@ -36,14 +35,13 @@ export function useObservableEagerState<TState>(
 		let initialState: TState;
 		const sub = state$.subscribe({
 			next: (value) => {
-				didSyncEmit.value = true;
 				initialState = value;
 			},
 			error: (error) => {
 				errorSignal.value = error;
 			},
 		});
-		// sub?.unsubscribe();
+		sub?.unsubscribe();
 		return initialState!;
 	});
 
@@ -68,11 +66,6 @@ export function useObservableEagerState<TState>(
 	// Propagate errors from either sync or async subscriptions.
 	if (errorSignal.value) {
 		throw errorSignal.value;
-	}
-
-	// Enforce the "eager" contract: a value must be available synchronously.
-	if (!didSyncEmit.value) {
-		throw new Error("Observable did not synchronously emit a value.");
 	}
 
 	return stateSignal;

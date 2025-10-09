@@ -1,19 +1,20 @@
-import { component$, useSignal, useVisibleTask$ } from "@qwik.dev/core";
+import { component$ } from "@qwik.dev/core";
 import type { DocumentHead } from "@qwik.dev/router";
-import { ExtensionSigner } from "applesauce-qwik/components/extension-signer/extension-signer";
+import {
+	ExtensionSigner,
+	GetRelaysButton,
+	ProfileCard,
+} from "applesauce-qwik/components";
+import { useRelayPoolProvider } from "applesauce-qwik/providers";
 import { useAccountsProvider } from "applesauce-qwik/providers/account-manager";
-import { useActionHubProvider } from "applesauce-qwik/providers/actions";
-import { useEventStoreProvider } from "applesauce-qwik/providers/event-store";
-import { useFactoryProvider } from "applesauce-qwik/providers/factory";
-import { useCookieLoader } from "./layout";
+import { useAccountsCookieLdr, useRelaysCookieLdr } from "./layout";
 
 export default component$(() => {
-	useEventStoreProvider();
-	useFactoryProvider();
-	useActionHubProvider();
+	const accountCookie = useAccountsCookieLdr();
+	useAccountsProvider(accountCookie.value);
 
-	const cookieValue = useCookieLoader();
-	useAccountsProvider(JSON.parse(cookieValue.value || "{}"));
+	const relaysCookie = useRelaysCookieLdr();
+	useRelayPoolProvider(relaysCookie.value);
 
 	// useVisibleTask$(() => {
 	// 	const cookies = document.cookie.split(";");
@@ -28,7 +29,15 @@ export default component$(() => {
 
 	return (
 		<>
-			<ExtensionSigner />
+			<div>
+				<ProfileCard />
+			</div>
+			<div>
+				<ExtensionSigner />
+			</div>
+			<div>
+				<GetRelaysButton />
+			</div>
 		</>
 	);
 });

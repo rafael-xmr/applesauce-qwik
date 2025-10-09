@@ -1,27 +1,28 @@
+import { useContext } from "@qwik.dev/core";
 import { ExtensionAccount } from "applesauce-accounts/accounts";
 import { ExtensionSigner } from "applesauce-signers";
-import { useAccountManager } from "../providers/account-manager";
+import { AccountManagerContext } from "../providers";
 import { useAsyncAction } from "./use-async-action";
 
-export function useExtensionSigner() {
-	const manager = useAccountManager();
+export function useExtensionSignerAsyncAction() {
+	const accountManagerCtx = useContext(AccountManagerContext);
 
 	const extension = useAsyncAction(async () => {
 		if (!window.nostr) throw new Error("Missing NIP-07 signer extension");
-		if (!manager) throw new Error("Missing account manager");
 
 		const signer = new ExtensionSigner();
 		const pubkey = await signer.getPublicKey();
 
 		// Get the existing account or create a new one
 		const account =
-			manager.accounts.find(
+			accountManagerCtx.value.accountManager.accounts.find(
 				(a) => a.type === ExtensionAccount.type && a.pubkey === pubkey,
 			) ?? new ExtensionAccount(pubkey, signer);
 
-		if (!manager.accounts.includes(account)) manager.addAccount(account);
+		if (!accountManagerCtx.value.accountManager.accounts.includes(account))
+			accountManagerCtx.value.accountManager.addAccount(account);
 
-		manager.setActive(account);
+		accountManagerCtx.value.accountManager.setActive(account);
 	});
 
 	return extension;

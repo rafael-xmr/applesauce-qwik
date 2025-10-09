@@ -1,10 +1,6 @@
-import { useServerData } from "@qwik.dev/core";
 import { App } from "./app";
-import type { StoredData } from "./providers/account-manager";
 
 export default () => {
-	const accountData = useServerData<StoredData>("accountData");
-
 	return (
 		<>
 			<head>
@@ -12,7 +8,7 @@ export default () => {
 				<title>Qwik Blank App</title>
 			</head>
 			<body>
-				<App accountData={accountData} />
+				<App />
 			</body>
 		</>
 	);

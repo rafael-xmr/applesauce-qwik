@@ -1,22 +1,15 @@
 import { component$ } from "@qwik.dev/core";
-import { ExtensionSigner } from "./components/extension-signer/extension-signer";
-import {
-	useAccountsProvider,
-	type StoredData,
-} from "./providers/account-manager";
-import { useActionHubProvider } from "./providers/actions";
+import { ExtensionSigner } from "./components/extension-signer";
+import { useAccountsProvider } from "./providers/account-manager";
+import { useActionHubProvider } from "./providers/action-hub";
+import { useEventFactoryProvider } from "./providers/event-factory";
 import { useEventStoreProvider } from "./providers/event-store";
-import { useFactoryProvider } from "./providers/factory";
 
-export interface AppProps {
-	accountData: StoredData | undefined;
-}
-
-export const App = component$<AppProps>(({ accountData }) => {
+export const App = component$(() => {
 	useEventStoreProvider();
-	useFactoryProvider();
+	useEventFactoryProvider();
 	useActionHubProvider();
-	useAccountsProvider(accountData);
+	useAccountsProvider();
 
 	return (
 		<>
@@ -24,4 +17,3 @@ export const App = component$<AppProps>(({ accountData }) => {
 		</>
 	);
 });
-

@@ -1,133 +1,124 @@
 import {
 	createContextId,
-	noSerialize,
 	type Signal,
-	useContext,
 	useContextProvider,
-	useSignal,
+	useSerializer$,
 	useStore,
-	useTask$,
 	useVisibleTask$,
 } from "@qwik.dev/core";
-import { AccountManager } from "applesauce-accounts";
+import { routeLoader$ } from "@qwik.dev/router";
+import {
+	AccountManager,
+	type IAccount,
+	type SerializedAccount,
+} from "applesauce-accounts";
 import { registerCommonAccountTypes } from "applesauce-accounts/accounts";
+import Cookies from "js-cookie";
 import { merge, Subject } from "rxjs";
 
-// Helper function to get a cookie on the client
-function getCookie(name: string): string | undefined {
-	if (typeof document === "undefined") return undefined;
-	const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
-	if (match) return decodeURIComponent(match[2]);
+export const ACCOUNT_MANAGER_COOKIE_NAME = "applesauce-account";
+
+export const useAccountsCookieLoader = routeLoader$(({ cookie }) => {
+	return cookie.get(ACCOUNT_MANAGER_COOKIE_NAME)?.value;
+});
+
+export interface StoredAccountData {
+	accounts: SerializedAccount<any, any>[];
+	activeAccountId?: string;
 }
 
-// Helper function to set a cookie on the client
-function setCookie(name: string, value: string, days: number) {
-	if (typeof document === "undefined") return;
-	const d = new Date();
-	d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
-	const expires = `expires=${d.toUTCString()}`;
-	document.cookie = `${name}=${encodeURIComponent(value)};${expires};path=/`;
-}
+export type AccountManagerContextType = {
+	accountManager: AccountManager;
+	activeAccount: IAccount | undefined;
+};
 
-interface ProfileData {
-	name?: string;
-	email?: string;
-}
-
-export interface StoredData {
-	accounts: any;
-	activeAccount?: string;
-	profileData?: ProfileData;
-}
-
-export const AccountsContext = createContextId<Signal<AccountManager>>(
-	"applesauce.account-manager",
-);
-export const ProfileDataContext = createContextId<ProfileData>(
-	"applesauce.profile-data",
-);
-
-/**
- * Server-side loader for account data.
- * In your SSR entry (e.g., entry.ssr.tsx or a server middleware),
- * you would call this function, passing the cookie from the request headers.
- */
-export function serverEntryLoader(cookies: Record<string, string>): StoredData {
-	const empty = { accounts: [] };
-	if (!cookies) return empty;
-
-	const cookieValue = cookies["applesauce-account"];
-
-	if (!cookieValue) return empty;
-
-	// Here you could also fetch additional profile data from a backend
-	// and merge it into the profileData object.
-
-	return JSON.parse(decodeURIComponent(cookieValue));
-}
-
-/** Returns the AccountManager from the context. */
-export function useAccountManager(): AccountManager | undefined {
-	const accountManager = useContext(AccountsContext);
-	return accountManager.value;
-}
-
-/** Returns the user's profile data. */
-export function useProfileData(): ProfileData {
-	return useContext(ProfileDataContext);
-}
+export const AccountManagerContext = createContextId<
+	Signal<AccountManagerContextType>
+>("applesauce.account-manager");
 
 /** Provides an AccountManager to the app. */
-export function useAccountsProvider(serverData: StoredData | undefined) {
-	const accountManager = useSignal<AccountManager>();
-	const profileData = useStore<ProfileData>(serverData?.profileData || {});
+export function useAccountsProvider(cookie?: string | undefined) {
+	const parsedCookie = cookie ? JSON.parse(cookie) : undefined;
+	const serverData: StoredAccountData =
+		"accounts" in (parsedCookie || {})
+			? parsedCookie
+			: { accounts: [], activeAccountId: undefined };
 
-	const manager = noSerialize(new AccountManager());
+	const storedData = useStore(serverData);
 
-	useTask$(() => {
-		if (!manager) return;
+	const accountManagerSerializerSignal = useSerializer$<
+		AccountManagerContextType,
+		StoredAccountData
+	>(() => ({
+		initial: storedData,
+		serialize: (manager) => ({
+			accounts: manager.accountManager.toJSON(),
+			activeAccountId: manager.activeAccount?.id,
+		}),
+		deserialize: (deserializeData) => {
+			const accountManager = new AccountManager();
 
-		registerCommonAccountTypes(manager);
-		if (serverData?.accounts) {
-			manager.fromJSON(serverData.accounts);
-		}
-		if (serverData?.activeAccount) {
-			const account = manager.getAccount(serverData.activeAccount);
-			if (account) manager.setActive(account);
-		}
-		accountManager.value = manager;
-	});
+			registerCommonAccountTypes(accountManager);
+
+			if (deserializeData?.accounts) {
+				accountManager.fromJSON(deserializeData.accounts);
+			}
+
+			if (deserializeData?.activeAccountId) {
+				const account = accountManager.getAccount(
+					deserializeData.activeAccountId,
+				);
+				if (account) {
+					accountManager.setActive(account);
+					storedData.activeAccountId = account.id;
+				}
+			} else {
+				accountManager.clearActive();
+			}
+
+			return {
+				accountManager,
+				activeAccount: accountManager.active,
+			};
+		},
+		update: (current) => {
+			if (storedData.activeAccountId) {
+				const account = current.accountManager.getAccount(
+					storedData.activeAccountId,
+				);
+
+				if (account) {
+					current.accountManager.setActive(account);
+					current.activeAccount = account;
+				}
+			} else {
+				current.accountManager.clearActive();
+				current.activeAccount = undefined;
+			}
+
+			return current;
+		},
+	}));
 
 	useVisibleTask$(
 		({ cleanup }) => {
-			// On the client, load profile data from a cookie (if available)
-			const manager = new AccountManager();
+			const accountManager =
+				accountManagerSerializerSignal.value.accountManager;
 
-			registerCommonAccountTypes(manager);
-			if (serverData?.accounts) {
-				manager.fromJSON(serverData.accounts);
-			}
-			if (serverData?.activeAccount) {
-				const account = manager.getAccount(serverData.activeAccount);
-				if (account) manager.setActive(account);
-			}
-			accountManager.value = manager;
-
-			const cookieName = "applesauce-account";
-
-			// This task runs on the client and saves data to the cookie
+			// This task runs on the client and saves data to the cookie when changes occur.
 			const manualSave = new Subject<void>();
 			const sub = merge(
 				manualSave,
-				manager.accounts$,
-				manager.active$,
+				accountManager.accounts$,
+				accountManager.active$,
 			).subscribe(() => {
-				const dataToStore: StoredData = {
-					accounts: manager.toJSON(),
-					activeAccount: manager.active?.id,
-					profileData: profileData,
+				const dataToStore: StoredAccountData = {
+					accounts: accountManager.toJSON(),
+					activeAccountId: accountManager.active?.id,
 				};
-				setCookie(cookieName, JSON.stringify(dataToStore), 365);
+				Cookies.set(ACCOUNT_MANAGER_COOKIE_NAME, JSON.stringify(dataToStore));
+
+				storedData.activeAccountId = accountManager.active?.id;
 			});
 
 			cleanup(() => sub.unsubscribe());
@@ -135,6 +126,5 @@ export function useAccountsProvider(serverData: StoredData | undefined) {
 		{ strategy: "document-ready" },
 	);
 
-	useContextProvider(AccountsContext, accountManager);
-	useContextProvider(ProfileDataContext, profileData);
+	useContextProvider(AccountManagerContext, accountManagerSerializerSignal);
 }
