@@ -20,7 +20,7 @@
     "qwik": "qwik"
   },
   "devDependencies": {
-    "applesauce-qwik": "link:../..",
+    "applesauce-qwik": "link:applesauce-qwik",
     "@types/node": "20.19.0",
     "globals": "16.3.0",
     "typescript": "5.4.5",

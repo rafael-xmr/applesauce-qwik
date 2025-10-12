@@ -6,14 +6,14 @@ import { useEventFactoryProvider } from "./providers/event-factory";
 import { useEventStoreProvider } from "./providers/event-store";
 
 export const App = component$(() => {
-	useEventStoreProvider();
-	useEventFactoryProvider();
-	useActionHubProvider();
-	useAccountsProvider();
+  useEventStoreProvider();
+  useEventFactoryProvider();
+  useActionHubProvider();
+  useAccountsProvider();
 
-	return (
-		<>
-			<ExtensionSigner />
-		</>
-	);
+  return (
+    <>
+      <ExtensionSigner />
+    </>
+  );
 });

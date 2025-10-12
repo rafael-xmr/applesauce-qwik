@@ -21,59 +21,59 @@ import type { Observable } from "rxjs";
  * @returns The latest value from the observable signal.
  */
 export function useObservableEagerState<TState>(
-	state$: NoSerialize<Observable<TState>>,
+  state$: NoSerialize<Observable<TState>>,
 ) {
-	const errorSignal = useSignal<Error | null>(null);
-	const didSyncEmit = useSignal(false);
+  const errorSignal = useSignal<Error | null>(null);
+  const didSyncEmit = useSignal(false);
 
-	const stateSignal = useSignal<TState | undefined>(() => {
-		if (!state$) {
-			// This can happen if the parent component doesn't provide the observable.
-			// We'll let the check below handle the error.
-			return undefined;
-		}
+  const stateSignal = useSignal<TState | undefined>(() => {
+    if (!state$) {
+      // This can happen if the parent component doesn't provide the observable.
+      // We'll let the check below handle the error.
+      return undefined;
+    }
 
-		let initialState: TState;
-		const sub = state$.subscribe({
-			next: (value) => {
-				didSyncEmit.value = true;
-				initialState = value;
-			},
-			error: (error) => {
-				errorSignal.value = error;
-			},
-		});
-		// sub?.unsubscribe();
-		return initialState!;
-	});
+    let initialState: TState;
+    const sub = state$.subscribe({
+      next: (value) => {
+        didSyncEmit.value = true;
+        initialState = value;
+      },
+      error: (error) => {
+        errorSignal.value = error;
+      },
+    });
+    // sub?.unsubscribe();
+    return initialState!;
+  });
 
-	useTask$(({ cleanup }) => {
-		// Subscribe to the observable for updates.
-		const subscription = state$?.subscribe({
-			next: (value) => {
-				// Qwik signals automatically prevent unnecessary re-renders
-				// if the new value is the same as the old one.
-				stateSignal.value = value;
-			},
-			error: (error) => {
-				errorSignal.value = error;
-			},
-		});
+  useTask$(({ cleanup }) => {
+    // Subscribe to the observable for updates.
+    const subscription = state$?.subscribe({
+      next: (value) => {
+        // Qwik signals automatically prevent unnecessary re-renders
+        // if the new value is the same as the old one.
+        stateSignal.value = value;
+      },
+      error: (error) => {
+        errorSignal.value = error;
+      },
+    });
 
-		cleanup(() => {
-			subscription?.unsubscribe();
-		});
-	});
+    cleanup(() => {
+      subscription?.unsubscribe();
+    });
+  });
 
-	// Propagate errors from either sync or async subscriptions.
-	if (errorSignal.value) {
-		throw errorSignal.value;
-	}
+  // Propagate errors from either sync or async subscriptions.
+  if (errorSignal.value) {
+    throw errorSignal.value;
+  }
 
-	// Enforce the "eager" contract: a value must be available synchronously.
-	if (!didSyncEmit.value) {
-		throw new Error("Observable did not synchronously emit a value.");
-	}
+  // Enforce the "eager" contract: a value must be available synchronously.
+  if (!didSyncEmit.value) {
+    throw new Error("Observable did not synchronously emit a value.");
+  }
 
-	return stateSignal;
+  return stateSignal;
 }

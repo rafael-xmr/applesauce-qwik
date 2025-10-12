@@ -5,25 +5,25 @@ import { AccountManagerContext } from "../providers";
 import { useAsyncAction } from "./use-async-action";
 
 export function useExtensionSignerAsyncAction() {
-	const accountManagerCtx = useContext(AccountManagerContext);
+  const accountManagerCtx = useContext(AccountManagerContext);
 
-	const extension = useAsyncAction(async () => {
-		if (!window.nostr) throw new Error("Missing NIP-07 signer extension");
+  const extension = useAsyncAction(async () => {
+    if (!window.nostr) throw new Error("Missing NIP-07 signer extension");
 
-		const signer = new ExtensionSigner();
-		const pubkey = await signer.getPublicKey();
+    const signer = new ExtensionSigner();
+    const pubkey = await signer.getPublicKey();
 
-		// Get the existing account or create a new one
-		const account =
-			accountManagerCtx.value.accountManager.accounts.find(
-				(a) => a.type === ExtensionAccount.type && a.pubkey === pubkey,
-			) ?? new ExtensionAccount(pubkey, signer);
+    // Get the existing account or create a new one
+    const account =
+      accountManagerCtx.value.accountManager.accounts.find(
+        (a) => a.type === ExtensionAccount.type && a.pubkey === pubkey,
+      ) ?? new ExtensionAccount(pubkey, signer);
 
-		if (!accountManagerCtx.value.accountManager.accounts.includes(account))
-			accountManagerCtx.value.accountManager.addAccount(account);
+    if (!accountManagerCtx.value.accountManager.accounts.includes(account))
+      accountManagerCtx.value.accountManager.addAccount(account);
 
-		accountManagerCtx.value.accountManager.setActive(account);
-	});
+    accountManagerCtx.value.accountManager.setActive(account);
+  });
 
-	return extension;
+  return extension;
 }

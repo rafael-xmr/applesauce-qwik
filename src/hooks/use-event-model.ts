@@ -1,39 +1,101 @@
 import {
+	type ComputedSignal,
 	type NoSerialize,
 	noSerialize,
-	type Signal,
+	type QRL,
 	useContext,
+	useResource$,
 	useSignal,
 	useTask$,
+	useVisibleTask$,
 } from "@qwik.dev/core";
 import {
 	type ModelConstructor,
 	withImmediateValueOrDefault,
 } from "applesauce-core";
-import hash_sum from "hash-sum";
-import { type Observable, of } from "rxjs";
+import {
+	catchError,
+	lastValueFrom,
+	map,
+	type Observable,
+	of,
+	timeout,
+} from "rxjs";
 import { EventStoreContext } from "../providers/event-store.js";
-import { useObservableEagerMemo } from "./use-observable-memo.js";
 
 /** Runs and subscribes to a model on the event store */
 export function useEventModel<T extends unknown, Args extends Array<any>>(
-	factory: ModelConstructor<T, Args>,
-	args?: Args | null,
-): Signal<T | undefined> {
+	factory: ComputedSignal<NoSerialize<QRL<ModelConstructor<T, Args>>>>,
+	args: Args,
+) {
 	const eventStore = useContext(EventStoreContext);
 
 	const subject =
-		useSignal<NoSerialize<() => Observable<T | undefined> | undefined>>();
+		useSignal<NoSerialize<Observable<T | undefined> | undefined>>();
 
-	useTask$(() => {
-		subject.value = noSerialize(() => {
-			if (args)
-				return eventStore.value
-					.model(factory, ...args)
-					.pipe(withImmediateValueOrDefault(undefined));
-			else return of(undefined);
-		});
+	useTask$(async ({ track }) => {
+		const newFactory = track(factory);
+
+		if (newFactory)
+			subject.value = noSerialize(
+				eventStore.value
+					.model(await newFactory.resolve(), ...args)
+					.pipe(withImmediateValueOrDefault(undefined)),
+			);
 	});
 
-	return useObservableEagerMemo(subject.value, [hash_sum(args), factory]);
+	const clientResult = useSignal<T | undefined>(undefined);
+	const shouldGetClientResult = useSignal();
+	const useClientResult = useSignal();
+
+	useVisibleTask$(
+		({ track, cleanup }) => {
+			const newSubject = track(subject);
+
+			if (newSubject && shouldGetClientResult.value) {
+				useClientResult.value = true;
+
+				// if (newPubkey) {
+				const sub = newSubject.subscribe({
+					next: (p) => {
+						clientResult.value = p;
+					},
+					error: () => {
+						clientResult.value = undefined;
+					},
+				});
+
+				cleanup(() => {
+					sub?.unsubscribe();
+				});
+				// } else {
+				// 	clientResult.value = undefined;
+				// }
+			}
+
+			shouldGetClientResult.value = true;
+		},
+		{ strategy: "document-ready" },
+	);
+
+	return useResource$(async ({ track }) => {
+		const newClientResult = track(clientResult);
+
+		if (newClientResult) return newClientResult;
+		if (!subject.value) return undefined;
+
+		let eventValue: T | undefined;
+
+		await lastValueFrom(
+			subject.value.pipe(
+				timeout(3000),
+				catchError((_err) => of(undefined)),
+				map((item) => {
+					if (item) eventValue = item;
+				}),
+			),
+			{ defaultValue: undefined },
+		);
+		return eventValue;
+	});
 }

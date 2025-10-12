@@ -1,21 +1,21 @@
 import { useSignal } from "@qwik.dev/core";
 
 export function useAsyncAction<T, Args extends any[]>(
-	fn: (...args: Args) => Promise<T>,
+  fn: (...args: Args) => Promise<T>,
 ) {
-	const loading = useSignal(false);
+  const loading = useSignal(false);
 
-	const run = async (...args: Args): Promise<T> => {
-		loading.value = true;
-		try {
-			return await fn(...args);
-		} finally {
-			loading.value = false;
-		}
-	};
+  const run = async (...args: Args): Promise<T> => {
+    loading.value = true;
+    try {
+      return await fn(...args);
+    } finally {
+      loading.value = false;
+    }
+  };
 
-	return {
-		loading,
-		run,
-	};
+  return {
+    loading,
+    run,
+  };
 }

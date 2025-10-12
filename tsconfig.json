@@ -1,21 +1,26 @@
 {
-  "compilerOptions": {
-    "allowJs": true,
-    "target": "ES2017",
-    "module": "ES2020",
-    "lib": ["es2020", "DOM"],
-    "jsx": "react-jsx",
-    "jsxImportSource": "@qwik.dev/core",
-    "strict": true,
-    "declaration": true,
-    "declarationDir": "lib-types",
-    "resolveJsonModule": true,
-    "moduleResolution": "Bundler",
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "incremental": true,
-    "isolatedModules": true,
-    "types": ["vite/client"]
-  },
-  "include": ["src"]
+	"compilerOptions": {
+		"allowJs": true,
+		"target": "ES2017",
+		"module": "ES2020",
+		"lib": ["es2020", "DOM"],
+		"jsx": "react-jsx",
+		"jsxImportSource": "@qwik.dev/core",
+		"strict": true,
+		"declaration": true,
+		"declarationDir": "lib-types",
+		"resolveJsonModule": true,
+		"moduleResolution": "Bundler",
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"incremental": true,
+		"isolatedModules": true,
+		"outDir": "tmp",
+		"types": ["vite/client"],
+		"baseUrl": ".",
+		"paths": {
+			"~/*": ["./src/*"]
+		}
+	},
+	"include": ["src"]
 }
