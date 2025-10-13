@@ -1,58 +1,75 @@
-import { type ComputedSignal, useComputed$, useContext, noSerialize, NoSerialize, $, type QRL } from "@qwik.dev/core";
+import {
+  $,
+  type ComputedSignal,
+  type NoSerialize,
+  noSerialize,
+  type QRL,
+  useComputed$,
+  useContext,
+} from "@qwik.dev/core";
 import type { ModelConstructor } from "applesauce-core";
 import type { AddressPointerWithoutD } from "applesauce-core/helpers";
-import { createAddressLoader } from "applesauce-loaders/loaders";
+import {
+  type AddressLoaderOptions,
+  createAddressLoader,
+} from "applesauce-loaders/loaders";
 import type { NostrEvent } from "nostr-tools";
-import { of, defer, EMPTY, ignoreElements, mergeWith } from "rxjs";
+import { defer, EMPTY, ignoreElements, mergeWith, of } from "rxjs";
 import { EventStoreContext, RelayPoolContext } from "~/providers";
 
-export function useAddressLoader(fallbackRelays?: string[] | undefined) {
+export function useAddressLoader(opts: AddressLoaderOptions = {}) {
   const relayPoolCtx = useContext(RelayPoolContext);
   const eventStoreCtx = useContext(EventStoreContext);
 
   const addressLoader = useComputed$(() => {
-    return noSerialize(createAddressLoader(relayPoolCtx.value.relayPool, {
-      eventStore: eventStoreCtx.value,
-      // bufferTime: 500,
-      extraRelays: relayPoolCtx.value.readRelays,
-      lookupRelays: fallbackRelays,
-    }));
+    return noSerialize(
+      createAddressLoader(relayPoolCtx.value.relayPool, {
+        ...opts,
+        eventStore: eventStoreCtx.value,
+        extraRelays: relayPoolCtx.value.readRelays,
+      }),
+    );
   });
 
   return addressLoader;
 }
 
-/** A model that loads an addressable event */
 export function useAddressableQuery(
   pointer: AddressPointerWithoutD | undefined | null,
-  fallbackRelays?: string[] | undefined,
-): ComputedSignal<NoSerialize<QRL<ModelConstructor<NostrEvent | undefined, []>>>> {
+  opts: AddressLoaderOptions = {},
+): ComputedSignal<
+  NoSerialize<QRL<ModelConstructor<NostrEvent | undefined, []>>>
+> {
   const eventStoreCtx = useContext(EventStoreContext);
-  const addressLoader = useAddressLoader(fallbackRelays);
+  const addressLoader = useAddressLoader(opts);
 
   return useComputed$(() => {
-
     const addressLoaderValue = addressLoader.value;
 
-
-    const res: NoSerialize<QRL<ModelConstructor<NostrEvent | undefined, []>>> = noSerialize($(() => {
-      return (events) =>
-        !pointer ? of(undefined) : defer(() =>
-          eventStoreCtx.value.hasReplaceable(
-            pointer.kind,
-            pointer.pubkey,
-            pointer.identifier,
-          )
-            ? EMPTY
-            : addressLoaderValue?.(pointer) || EMPTY,
-        ).pipe(
-          ignoreElements(),
-          mergeWith(
-            events.replaceable(pointer.kind, pointer.pubkey, pointer.identifier),
-          ),
-        )
-    }));
-
-    return res;
+    return noSerialize(
+      $(() => {
+        return (events) =>
+          !pointer
+            ? of(undefined)
+            : defer(() =>
+              eventStoreCtx.value.hasReplaceable(
+                pointer.kind,
+                pointer.pubkey,
+                pointer.identifier,
+              )
+                ? EMPTY
+                : addressLoaderValue?.(pointer) || EMPTY,
+            ).pipe(
+              ignoreElements(),
+              mergeWith(
+                events.replaceable(
+                  pointer.kind,
+                  pointer.pubkey,
+                  pointer.identifier,
+                ),
+              ),
+            );
+      }),
+    );
   });
 }

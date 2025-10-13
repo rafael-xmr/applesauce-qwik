@@ -1,101 +1,102 @@
 import {
-	type ComputedSignal,
-	type NoSerialize,
-	noSerialize,
-	type QRL,
-	useContext,
-	useResource$,
-	useSignal,
-	useTask$,
-	useVisibleTask$,
+  type ComputedSignal,
+  type NoSerialize,
+  noSerialize,
+  type QRL,
+  useContext,
+  useResource$,
+  useSignal,
+  useTask$,
+  useVisibleTask$,
 } from "@qwik.dev/core";
 import {
-	type ModelConstructor,
-	withImmediateValueOrDefault,
+  type ModelConstructor,
+  withImmediateValueOrDefault,
 } from "applesauce-core";
 import {
-	catchError,
-	lastValueFrom,
-	map,
-	type Observable,
-	of,
-	timeout,
+  catchError,
+  lastValueFrom,
+  map,
+  type Observable,
+  of,
+  timeout,
 } from "rxjs";
 import { EventStoreContext } from "../providers/event-store.js";
 
 /** Runs and subscribes to a model on the event store */
-export function useEventModel<T extends unknown, Args extends Array<any>>(
-	factory: ComputedSignal<NoSerialize<QRL<ModelConstructor<T, Args>>>>,
-	args: Args,
+export function useEventModel<T, Args extends Array<any>>(
+  factory: ComputedSignal<NoSerialize<QRL<ModelConstructor<T, Args>>>>,
+  args: Args,
+  defaultValue?: T,
 ) {
-	const eventStore = useContext(EventStoreContext);
+  const eventStore = useContext(EventStoreContext);
 
-	const subject =
-		useSignal<NoSerialize<Observable<T | undefined> | undefined>>();
+  const observableSubject =
+    useSignal<NoSerialize<Observable<T | undefined> | undefined>>();
 
-	useTask$(async ({ track }) => {
-		const newFactory = track(factory);
+  useTask$(async ({ track }) => {
+    const newFactory = track(factory);
 
-		if (newFactory)
-			subject.value = noSerialize(
-				eventStore.value
-					.model(await newFactory.resolve(), ...args)
-					.pipe(withImmediateValueOrDefault(undefined)),
-			);
-	});
+    if (newFactory) {
+      const factoryValue = await newFactory.resolve();
 
-	const clientResult = useSignal<T | undefined>(undefined);
-	const shouldGetClientResult = useSignal();
-	const useClientResult = useSignal();
+      observableSubject.value = noSerialize(
+        eventStore.value
+          .model(factoryValue, ...args)
+          .pipe(withImmediateValueOrDefault(undefined)),
+      );
+    }
+  });
 
-	useVisibleTask$(
-		({ track, cleanup }) => {
-			const newSubject = track(subject);
+  const clientResult = useSignal<T | undefined>(undefined);
+  const shouldGetClientResult = useSignal();
+  const shouldUseClientResult = useSignal();
 
-			if (newSubject && shouldGetClientResult.value) {
-				useClientResult.value = true;
+  useVisibleTask$(
+    ({ track, cleanup }) => {
+      const newObservableSubject = track(observableSubject);
 
-				// if (newPubkey) {
-				const sub = newSubject.subscribe({
-					next: (p) => {
-						clientResult.value = p;
-					},
-					error: () => {
-						clientResult.value = undefined;
-					},
-				});
+      if (newObservableSubject && shouldGetClientResult.value) {
+        shouldUseClientResult.value = true;
 
-				cleanup(() => {
-					sub?.unsubscribe();
-				});
-				// } else {
-				// 	clientResult.value = undefined;
-				// }
-			}
+        const sub = newObservableSubject.subscribe({
+          next: (p) => {
+            clientResult.value = p;
+          },
+          error: () => {
+            clientResult.value = undefined;
+          },
+        });
 
-			shouldGetClientResult.value = true;
-		},
-		{ strategy: "document-ready" },
-	);
+        cleanup(() => {
+          sub.unsubscribe();
+        });
+      }
 
-	return useResource$(async ({ track }) => {
-		const newClientResult = track(clientResult);
+      shouldGetClientResult.value = true;
+    },
+    { strategy: "document-ready" },
+  );
 
-		if (newClientResult) return newClientResult;
-		if (!subject.value) return undefined;
+  return useResource$(async ({ track }) => {
+    const newClientResult = track(clientResult);
 
-		let eventValue: T | undefined;
+    if (newClientResult) return newClientResult;
+    if (!observableSubject.value) return undefined;
+    if (defaultValue) return defaultValue;
 
-		await lastValueFrom(
-			subject.value.pipe(
-				timeout(3000),
-				catchError((_err) => of(undefined)),
-				map((item) => {
-					if (item) eventValue = item;
-				}),
-			),
-			{ defaultValue: undefined },
-		);
-		return eventValue;
-	});
+    let eventValue: T | undefined;
+
+    await lastValueFrom(
+      observableSubject.value.pipe(
+        timeout(3000),
+        catchError((_err) => of(undefined)),
+        map((item) => {
+          if (item) eventValue = item;
+        }),
+      ),
+      { defaultValue: defaultValue },
+    );
+    return eventValue;
+  });
 }

@@ -12,7 +12,7 @@ import {
 } from "applesauce-qwik";
 import {
   useAccountsCookieLdr,
-  useContactsCookieLdr,
+  useContactsLdr,
   useRelaysCookieLdr,
 } from "./layout";
 
@@ -23,8 +23,8 @@ export default component$(() => {
   const relaysCookie = useRelaysCookieLdr();
   useRelayPoolProvider(relaysCookie.value);
 
-  const contactsCookie = useContactsCookieLdr();
-  useContactsProvider(contactsCookie.value);
+  const contacts = useContactsLdr();
+  useContactsProvider(contacts.value);
 
   // useVisibleTask$(() => {
   // 	const cookies = document.cookie.split(";");

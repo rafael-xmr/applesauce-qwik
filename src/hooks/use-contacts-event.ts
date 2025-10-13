@@ -5,15 +5,18 @@ import { AccountManagerContext } from "../providers";
 import useReplaceableEvent from "./use-replaceable-event";
 
 export function useContactsEvent() {
-	const contactsCtx = useContext(ContactsContext);
+  const contactsCtx = useContext(ContactsContext);
+  const hasContacts = contactsCtx.contacts.length > 0;
 
-	const hasContacts = contactsCtx.contacts.length > 0;
+  const accountManagerCtx = useContext(AccountManagerContext);
+  const pubkey = accountManagerCtx.value.activeAccount?.pubkey;
 
-	const accountManagerCtx = useContext(AccountManagerContext);
-	const pubkey = accountManagerCtx.value.activeAccount?.pubkey;
+  const listId = pubkey && `${kinds.Contacts}:${pubkey}`;
+  const listEvent = useReplaceableEvent(
+    hasContacts ? undefined : listId,
+    {},
+    contactsCtx.contactsEvent,
+  );
 
-	const listId = pubkey && `${kinds.Contacts}:${pubkey}`;
-	const listEvent = useReplaceableEvent(hasContacts ? undefined : listId);
-
-	return listEvent;
+  return listEvent;
 }

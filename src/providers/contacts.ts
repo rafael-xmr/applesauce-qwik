@@ -1,18 +1,13 @@
 import {
   createContextId,
+  useContext,
   useContextProvider,
   useStore,
   useVisibleTask$,
 } from "@qwik.dev/core";
-import { routeLoader$ } from "@qwik.dev/router";
-import Cookies from "js-cookie";
+import type { Event } from "nostr-tools";
 import type { ProfilePointer } from "nostr-tools/nip19";
-
-export const CONTACTS_COOKIE_NAME = "applesauce-contacts";
-
-export const useContactsCookieLoader = routeLoader$(({ cookie }) => {
-  return cookie.get(CONTACTS_COOKIE_NAME)?.value;
-});
+import { AccountManagerContext } from "./account-manager";
 
 export const ContactsContext = createContextId<StoredContactsData>(
   "applesauce.contacts",
@@ -20,24 +15,57 @@ export const ContactsContext = createContextId<StoredContactsData>(
 
 export interface StoredContactsData {
   contacts: ProfilePointer[];
+  contactsEvent: Event | undefined;
 }
 
 /** Provides an ContactsContext to the app. */
-export function useContactsProvider(cookie?: string | undefined) {
-  const parsedCookie = cookie ? JSON.parse(cookie) : {};
-  const serverData: StoredContactsData =
-    "contacts" in parsedCookie ? parsedCookie : { contacts: [] };
+export function useContactsProvider(
+  serverData?: StoredContactsData | undefined,
+) {
+  const activeAccount = useContext(AccountManagerContext);
 
-  const contactsStore = useStore<StoredContactsData>(serverData);
+  const contactsStore = useStore<StoredContactsData>(
+    serverData || {
+      contacts: [],
+      contactsEvent: undefined,
+    },
+  );
 
   useVisibleTask$(
-    ({ track }) => {
-      const newContacts = track(contactsStore.contacts);
+    async ({ track }) => {
+      const newActiveAccount = track(activeAccount).activeAccount;
 
-      Cookies.set(
-        CONTACTS_COOKIE_NAME,
-        JSON.stringify({ contacts: newContacts }),
-      );
+      if (!newActiveAccount?.pubkey) {
+        return;
+      }
+
+      const response = await fetch(`/contacts?user=${newActiveAccount.pubkey}`);
+      const data = await response.json();
+
+      if (data) {
+        contactsStore.contacts = data.contacts;
+        contactsStore.contactsEvent = data.contactsEvent;
+      }
+    },
+    { strategy: "document-ready" },
+  );
+
+  useVisibleTask$(
+    async ({ track }) => {
+      const newContacts = track(contactsStore);
+      const newActiveAccount = track(activeAccount).activeAccount;
+
+      if (!newActiveAccount?.pubkey) {
+        return;
+      }
+
+      await fetch(`/contacts?user=${newActiveAccount.pubkey}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newContacts),
+      });
     },
     { strategy: "document-ready" },
   );
