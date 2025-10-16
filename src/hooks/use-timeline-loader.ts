@@ -4,7 +4,7 @@ import {
 	useContext,
 	useResource$,
 } from "@qwik.dev/core";
-import { createTimelineLoader } from "applesauce-loaders/loaders";
+import { createTimelineLoader } from "applesauce-loaders/loaders/timeline-loader";
 import type { Event, Filter } from "nostr-tools";
 import { catchError, map, of, timeout } from "rxjs";
 import { lastValueFrom } from "rxjs/internal/lastValueFrom";

@@ -3,3 +3,5 @@ export * from "./following-count";
 export * from "./following-timeline";
 export * from "./get-relays-button";
 export * from "./npub-avatar";
+export * from "./npub-bio";
+export * from "./npub-username";

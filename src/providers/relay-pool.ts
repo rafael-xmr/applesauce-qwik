@@ -4,13 +4,12 @@ import {
   useContextProvider,
   useSerializer$,
   useStore,
-  useVisibleTask$,
 } from "@qwik.dev/core";
 import { routeLoader$ } from "@qwik.dev/router";
-import { RelayPool, type SerializedRelayPool } from "applesauce-relay";
+import { RelayPool, type SerializedRelayPool } from "applesauce-relay/pool";
+import { Relay } from "applesauce-relay/relay";
 import Cookies from "js-cookie";
-import { merge, Subject } from "rxjs";
-import { getReadAndWriteRelayLists, type StoredRelay } from "~/utils/relays";
+import { getReadAndWriteRelayLists, type StoredRelays } from "~/utils/relays";
 
 export const RELAYS_COOKIE_NAME = "applesauce-relays";
 
@@ -19,14 +18,14 @@ export const useRelaysCookieLoader = routeLoader$(({ cookie }) => {
 });
 
 export interface StoredRelayData {
-  relays: StoredRelay[];
+  relays: StoredRelays;
   readRelays: string[];
   writeRelays: string[];
   relayPool?: SerializedRelayPool;
 }
 
 export interface RelayPoolContextType {
-  relays: StoredRelay[];
+  relays: StoredRelays;
   readRelays: string[];
   writeRelays: string[];
   relayPool: RelayPool;
@@ -35,14 +34,15 @@ export interface RelayPoolContextType {
 export const RelayPoolContext = createContextId<Signal<RelayPoolContextType>>(
   "applesauce.relay-pool",
 );
-export const StoredRelaysContext =
-  createContextId<StoredRelayData>("stored-relays");
+
+export const RelaysStoreContext =
+  createContextId<StoredRelayData>("relays-store");
 
 /** Provides an RelayPoolContext to the app. */
 export function useRelayPoolProvider(cookie?: string | undefined) {
   const parsedCookie = cookie ? JSON.parse(cookie) : {};
   const serverData: StoredRelayData =
-    "relays" in parsedCookie ? parsedCookie : { relays: [] };
+    "relays" in parsedCookie ? parsedCookie : { relays: {} };
 
   const storedData = useStore<StoredRelayData>(serverData);
 
@@ -61,7 +61,7 @@ export function useRelayPoolProvider(cookie?: string | undefined) {
         };
       },
       deserialize: (deserializeData) => {
-        // NOTE: Always create only one EventStore instance for your entire application and share it across components.
+        // NOTE: Always create only one RelayPool instance for your entire application and share it across components.
         const relayPool = !deserializeData.relayPool
           ? new RelayPool()
           : RelayPool.fromJSON(deserializeData.relayPool);
@@ -77,64 +77,23 @@ export function useRelayPoolProvider(cookie?: string | undefined) {
         };
       },
       update: (current) => {
-        Cookies.set(RELAYS_COOKIE_NAME, JSON.stringify(current));
+        current.relays = storedData.relays;
+        for (const url of Object.keys(current.relays)) {
+          current.relayPool.relays.set(url, new Relay(url));
+        }
         const { readRelays, writeRelays } = getReadAndWriteRelayLists(
           current.relays,
         );
-        return { ...current, readRelays, writeRelays };
+        current = { ...current, readRelays, writeRelays };
+
+        // TODO: impl server flow
+        Cookies.set(RELAYS_COOKIE_NAME, JSON.stringify(current));
+
+        return current;
       },
     }),
   );
 
-  useVisibleTask$(
-    ({ cleanup }) => {
-      const relayPool = relayPoolSignal.value.relayPool;
-
-      // This task runs on the client and saves data to the cookie when changes occur.
-      const manualSave = new Subject<void>();
-      const sub = merge(manualSave, relayPool.relays$).subscribe(() => {
-        const newRelays = [];
-        const readRelays = [];
-        const writeRelays = [];
-
-        for (const [name, _relay] of relayPool.relays) {
-          const existing = storedData.relays.find((r) => r.name === name);
-          if (existing) {
-            newRelays.push({
-              name,
-              read: existing.read,
-              write: existing.write,
-            });
-
-            if (existing.read) readRelays.push(existing.name);
-            if (existing.write) writeRelays.push(existing.name);
-          } else {
-            newRelays.push({
-              name,
-              read: true,
-              write: true,
-            });
-            readRelays.push(name);
-            writeRelays.push(name);
-          }
-        }
-
-        const dataToStore: StoredRelayData = {
-          relays: newRelays,
-          readRelays,
-          writeRelays,
-          relayPool: relayPool.toJSON(),
-        };
-
-        Cookies.set(RELAYS_COOKIE_NAME, JSON.stringify(dataToStore));
-
-        storedData.relays = newRelays;
-      });
-
-      cleanup(() => sub.unsubscribe());
-    },
-    { strategy: "document-ready" },
-  );
-
   useContextProvider(RelayPoolContext, relayPoolSignal);
+  useContextProvider(RelaysStoreContext, storedData);
 }

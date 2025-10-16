@@ -9,7 +9,7 @@ import {
   EventStore,
   type IEventStore,
   type SerializedEventStore,
-} from "applesauce-core";
+} from "applesauce-core/event-store";
 
 export const EventStoreContext = createContextId<Signal<IEventStore>>(
   "applesauce.event-store",

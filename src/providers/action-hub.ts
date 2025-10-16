@@ -1,14 +1,14 @@
 import {
   createContextId,
+  isServer,
   noSerialize,
   type Signal,
   useContext,
   useContextProvider,
   useSignal,
   useTask$,
-  useVisibleTask$,
 } from "@qwik.dev/core";
-import { ActionHub } from "applesauce-actions";
+import { ActionHub } from "applesauce-actions/action-hub";
 import { EventFactoryContext } from "./event-factory";
 import { EventStoreContext } from "./event-store";
 
@@ -39,16 +39,15 @@ export function useActionHubProvider() {
   // NOTE: on document-ready ensure deserialized eventStore and eventFactory are used
   // can't use useSerializer$ here because can't pass the both required and already
   // deserialized eventStore and eventFactory
-  useVisibleTask$(
-    ({ track }) => {
-      const newEventStore = track(eventStore);
-      const newFactory = track(eventFactory);
-      if (!newEventStore || !newFactory) return;
+  useTask$(({ track }) => {
+    if (isServer) return;
 
-      actionHub.value = new ActionHub(newEventStore, newFactory);
-    },
-    { strategy: "document-ready" },
-  );
+    const newEventStore = track(eventStore);
+    const newFactory = track(eventFactory);
+    if (!newEventStore || !newFactory) return;
+
+    actionHub.value = new ActionHub(newEventStore, newFactory);
+  });
 
   useContextProvider(ActionsContext, actionHub);
 }

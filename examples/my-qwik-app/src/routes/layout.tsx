@@ -3,7 +3,8 @@ import { routeLoader$ } from "@qwik.dev/router";
 import {
   type StoredAccountData,
   type StoredContactsData,
-  useAccountsCookieLoader,
+  useAccountManagerCookieLoader,
+  useAccountPubkeyCookieLoader,
   useRelaysCookieLoader,
 } from "applesauce-qwik";
 import { getValue } from "~/db";
@@ -15,28 +16,96 @@ export const useServerTimeLoader = routeLoader$(() => {
   };
 });
 
-export const useAccountsCookieLdr = useAccountsCookieLoader;
+export const useAccountsCookieLdr = useAccountManagerCookieLoader;
+export const useAccountPubkeyLdr = useAccountPubkeyCookieLoader;
 export const useRelaysCookieLdr = useRelaysCookieLoader;
 
-export const useContactsLdr = routeLoader$(async (requestEvent) => {
-  const accountCookie = await requestEvent.resolveValue(useAccountsCookieLdr);
+export const useAccountsLdr = routeLoader$(async (requestEvent) => {
+  const pubkeyCookie = await requestEvent.resolveValue(useAccountPubkeyLdr);
 
-  if (!accountCookie) {
-    return undefined;
-  }
+  let pubkey = pubkeyCookie;
 
   try {
-    const parsedCookie = accountCookie ? JSON.parse(accountCookie) : {};
-    const serverData: StoredAccountData =
-      "accounts" in parsedCookie
-        ? parsedCookie
-        : { accounts: [], activeAccountId: undefined };
+    const accountManagerCookie =
+      await requestEvent.resolveValue(useAccountsCookieLdr);
 
-    const activeAccountId = serverData.activeAccountId;
-    const activeAccount = serverData.accounts.find(
-      (acc) => acc.id === activeAccountId,
-    );
-    const pubkey = activeAccount?.pubkey;
+    if (accountManagerCookie) {
+      const parsedAccountCookie = accountManagerCookie
+        ? JSON.parse(accountManagerCookie)
+        : {};
+      const accountServerData: StoredAccountData =
+        "accounts" in parsedAccountCookie
+          ? parsedAccountCookie
+          : { accounts: [], activeAccountId: undefined };
+
+      const activeAccountId = accountServerData.activeAccountId;
+      const activeAccount = accountServerData.accounts.find(
+        (acc) => acc.id === activeAccountId,
+      );
+
+      if (activeAccount?.pubkey && !pubkey) {
+        pubkey = activeAccount.pubkey;
+      }
+
+      if (!pubkey) {
+        return undefined;
+      }
+
+      const profileObj = getValue(`${pubkey}-profiles`);
+
+      return {
+        activeAccountId,
+        accounts: accountServerData.accounts,
+        resolvedProfile: profileObj.resolvedProfile,
+        accountType: profileObj.accountType,
+      } as StoredAccountData;
+    } else {
+      if (!pubkey) {
+        return undefined;
+      }
+
+      const profileObj = getValue(`${pubkey}-profiles`);
+
+      return {
+        activeAccountId: undefined,
+        accounts: [],
+        resolvedProfile: profileObj.resolvedProfile,
+        accountType: profileObj.accountType,
+      } as StoredAccountData;
+    }
+  } catch (e) {
+    return undefined;
+  }
+});
+
+export const useContactsLdr = routeLoader$(async (requestEvent) => {
+  const pubkeyCookie = await requestEvent.resolveValue(useAccountPubkeyLdr);
+
+  let pubkey = pubkeyCookie;
+
+  try {
+    const accountManagerCookie =
+      await requestEvent.resolveValue(useAccountsCookieLdr);
+
+    if (accountManagerCookie) {
+      const parsedAccountCookie = accountManagerCookie
+        ? JSON.parse(accountManagerCookie)
+        : {};
+      const accountServerData: StoredAccountData =
+        "accounts" in parsedAccountCookie
+          ? parsedAccountCookie
+          : { accounts: [], activeAccountId: undefined };
+
+      const activeAccountId = accountServerData.activeAccountId;
+      const activeAccount = accountServerData.accounts.find(
+        (acc) => acc.id === activeAccountId,
+      );
+
+      if (activeAccount?.pubkey && !pubkey) {
+        pubkey = activeAccount.pubkey;
+      }
+    }
+
     if (!pubkey) {
       return undefined;
     }

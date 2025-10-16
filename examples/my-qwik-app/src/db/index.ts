@@ -1,32 +1,14 @@
-import fs from "fs";
-import path from "path";
+import { open } from "lmdb";
 
-const dbPath = path.resolve("./db.json");
+const db = open({
+  path: "db",
+  compression: true,
+});
 
-interface DbData {
-  [key: string]: any;
+export function getValue<T>(key: string): T | undefined {
+  return db.get(key);
 }
 
-function readDb(): DbData {
-  try {
-    const data = fs.readFileSync(dbPath, "utf-8");
-    return JSON.parse(data);
-  } catch (error) {
-    return {};
-  }
-}
-
-function writeDb(data: DbData) {
-  fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
-}
-
-export function getValue(key: string) {
-  const db = readDb();
-  return db[key];
-}
-
-export function setValue(key: string, value: any) {
-  const db = readDb();
-  db[key] = value;
-  writeDb(db);
+export function setValue<T>(key: string, value: T) {
+  return db.put(key, value);
 }

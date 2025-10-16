@@ -1,46 +1,45 @@
-import { component$ } from "@qwik.dev/core";
+import { $, component$ } from "@qwik.dev/core";
 import type { DocumentHead } from "@qwik.dev/router";
 import {
   ExtensionSigner,
   FollowingCount,
-  FollowingTimeline,
   GetRelaysButton,
-  ProfileCard,
+  NpubAvatarCard,
+  NpubBioCard,
+  NpubUsernameCard,
   useAccountsProvider,
   useContactsProvider,
   useRelayPoolProvider,
 } from "applesauce-qwik";
-import {
-  useAccountsCookieLdr,
-  useContactsLdr,
-  useRelaysCookieLdr,
-} from "./layout";
+import { useAccountsLdr, useContactsLdr, useRelaysCookieLdr } from "./layout";
 
+// TODO: implement AUTH
 export default component$(() => {
-  const accountCookie = useAccountsCookieLdr();
-  useAccountsProvider(accountCookie.value);
+  const accountManagerServerData = useAccountsLdr();
+  useAccountsProvider(
+    accountManagerServerData.value,
+    $((pubkey) => `/profiles?user=${pubkey}`),
+  );
 
   const relaysCookie = useRelaysCookieLdr();
   useRelayPoolProvider(relaysCookie.value);
 
-  const contacts = useContactsLdr();
-  useContactsProvider(contacts.value);
-
-  // useVisibleTask$(() => {
-  // 	const cookies = document.cookie.split(";");
-  // 	for (const cookie of cookies) {
-  // 		const [name, value] = cookie.trim().split("=");
-  // 		if (name === "my-cookie") {
-  // 			cookieValue.value = value;
-  // 			break;
-  // 		}
-  // 	}
-  // });
+  const contactsServerData = useContactsLdr();
+  useContactsProvider(
+    contactsServerData.value,
+    $((pubkey) => `/contacts?user=${pubkey}`),
+  );
 
   return (
     <>
       <div>
-        <ProfileCard />
+        <NpubAvatarCard />
+      </div>
+      <div>
+        <NpubUsernameCard />
+      </div>
+      <div>
+        <NpubBioCard />
       </div>
       <div>
         <FollowingCount />
@@ -51,9 +50,9 @@ export default component$(() => {
       <div>
         <GetRelaysButton />
       </div>
-      <div>
-        <FollowingTimeline />
-      </div>
+      {/* <div> */}
+      {/*   <FollowingTimeline /> */}
+      {/* </div> */}
     </>
   );
 });

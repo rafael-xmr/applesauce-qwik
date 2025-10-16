@@ -7,12 +7,12 @@ import {
   useComputed$,
   useContext,
 } from "@qwik.dev/core";
-import type { ModelConstructor } from "applesauce-core";
-import type { AddressPointerWithoutD } from "applesauce-core/helpers";
+import type { ModelConstructor } from "applesauce-core/event-store";
+import type { AddressPointerWithoutD } from "applesauce-core/helpers/pointers";
 import {
   type AddressLoaderOptions,
   createAddressLoader,
-} from "applesauce-loaders/loaders";
+} from "applesauce-loaders/loaders/address-loader";
 import type { NostrEvent } from "nostr-tools";
 import { defer, EMPTY, ignoreElements, mergeWith, of } from "rxjs";
 import { EventStoreContext, RelayPoolContext } from "~/providers";
@@ -22,11 +22,15 @@ export function useAddressLoader(opts: AddressLoaderOptions = {}) {
   const eventStoreCtx = useContext(EventStoreContext);
 
   const addressLoader = useComputed$(() => {
+    const relayPool = relayPoolCtx.value.relayPool;
+    const eventStore = eventStoreCtx.value;
+    const readRelays = relayPoolCtx.value.readRelays;
+
     return noSerialize(
-      createAddressLoader(relayPoolCtx.value.relayPool, {
+      createAddressLoader(relayPool, {
         ...opts,
-        eventStore: eventStoreCtx.value,
-        extraRelays: relayPoolCtx.value.readRelays,
+        eventStore,
+        extraRelays: readRelays,
       }),
     );
   });
@@ -35,7 +39,7 @@ export function useAddressLoader(opts: AddressLoaderOptions = {}) {
 }
 
 export function useAddressableQuery(
-  pointer: AddressPointerWithoutD | undefined | null,
+  pointer: ComputedSignal<AddressPointerWithoutD | undefined | null>,
   opts: AddressLoaderOptions = {},
 ): ComputedSignal<
   NoSerialize<QRL<ModelConstructor<NostrEvent | undefined, []>>>
@@ -45,27 +49,30 @@ export function useAddressableQuery(
 
   return useComputed$(() => {
     const addressLoaderValue = addressLoader.value;
+    const eventStoreValue = noSerialize(eventStoreCtx.value);
+
+    const pointerValue = pointer.value;
 
     return noSerialize(
       $(() => {
         return (events) =>
-          !pointer
+          !pointerValue
             ? of(undefined)
             : defer(() =>
-              eventStoreCtx.value.hasReplaceable(
-                pointer.kind,
-                pointer.pubkey,
-                pointer.identifier,
+              eventStoreValue?.hasReplaceable(
+                pointerValue.kind,
+                pointerValue.pubkey,
+                pointerValue.identifier,
               )
                 ? EMPTY
-                : addressLoaderValue?.(pointer) || EMPTY,
+                : addressLoaderValue?.(pointerValue) || EMPTY,
             ).pipe(
               ignoreElements(),
               mergeWith(
                 events.replaceable(
-                  pointer.kind,
-                  pointer.pubkey,
-                  pointer.identifier,
+                  pointerValue.kind,
+                  pointerValue.pubkey,
+                  pointerValue.identifier,
                 ),
               ),
             );

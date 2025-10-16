@@ -8,13 +8,13 @@ export const onGet: RequestHandler = async ({ query, json }) => {
     return;
   }
 
-  const contacts = getValue(`${user}-contacts`);
-  if (!contacts) {
+  const profile = getValue(`${user}-profiles`);
+  if (!profile) {
     json(200, []);
     return;
   }
 
-  json(200, contacts);
+  json(200, profile);
 };
 
 export const onPost: RequestHandler = async ({ query, parseBody, json }) => {
@@ -24,6 +24,6 @@ export const onPost: RequestHandler = async ({ query, parseBody, json }) => {
   }
 
   const body = await parseBody();
-  setValue(`${user}-contacts`, body);
+  setValue(`${user}-profiles`, body);
   json(200, body);
 };

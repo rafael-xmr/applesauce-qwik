@@ -4,27 +4,25 @@ import {
   parseCoordinate,
 } from "applesauce-core/helpers/pointers";
 import { kinds } from "nostr-tools";
-import {
-  AccountManagerContext,
-  ContactsContext,
-  RelayPoolContext,
-} from "../providers";
+import { AccountManagerContext, RelayPoolContext } from "../providers";
 import useReplaceableEvent from "./use-replaceable-event";
 
-export function useContactsEvent() {
+export function useProfileEvent() {
   const accountManagerCtx = useContext(AccountManagerContext);
   const relayPoolCtx = useContext(RelayPoolContext);
-  const contactsCtx = useContext(ContactsContext);
 
+  const storedProfile = useComputed$(
+    () => accountManagerCtx.value.resolvedProfile,
+  );
   const pubkey = useComputed$(
     () => accountManagerCtx.value.activeAccount?.pubkey,
   );
 
   const pointer = useComputed$(() => {
-    const coord = parseCoordinate(`${kinds.Contacts}:${pubkey.value}`);
+    const coord = parseCoordinate(`${kinds.Metadata}:${pubkey.value}`);
 
-    if (!!contactsCtx.contactsEvent) {
-      // NOTE: no pointer if we have a stored contacts event, useReplaceableEvent will return the stored contacts
+    if (!!storedProfile.value) {
+      // NOTE: no pointer if we have a stored profile, useReplaceableEvent will return the stored profile
       return undefined;
     }
 
@@ -36,7 +34,7 @@ export function useContactsEvent() {
     );
   });
 
-  const listEvent = useReplaceableEvent(pointer, {}, contactsCtx.contactsEvent);
+  const listEvent = useReplaceableEvent(pointer, {}, storedProfile.value);
 
   return listEvent;
 }

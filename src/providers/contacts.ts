@@ -1,13 +1,23 @@
 import {
   createContextId,
+  isServer,
+  type QRL,
   useContext,
   useContextProvider,
   useStore,
-  useVisibleTask$,
+  useTask$,
 } from "@qwik.dev/core";
+import { routeLoader$ } from "@qwik.dev/router";
+import Cookies from "js-cookie";
 import type { Event } from "nostr-tools";
 import type { ProfilePointer } from "nostr-tools/nip19";
 import { AccountManagerContext } from "./account-manager";
+
+export const CONTACTS_COOKIE_NAME = "applesauce-contacts";
+
+export const useContactsCookieLoader = routeLoader$(({ cookie }) => {
+  return cookie.get(CONTACTS_COOKIE_NAME)?.value;
+});
 
 export const ContactsContext = createContextId<StoredContactsData>(
   "applesauce.contacts",
@@ -20,55 +30,67 @@ export interface StoredContactsData {
 
 /** Provides an ContactsContext to the app. */
 export function useContactsProvider(
-  serverData?: StoredContactsData | undefined,
+  serverData: StoredContactsData = {
+    contacts: [],
+    contactsEvent: undefined,
+  },
+  serverStorePathBuilder?: QRL<(pubkey: string) => string>,
 ) {
   const activeAccount = useContext(AccountManagerContext);
+  const contactsStore = useStore<StoredContactsData>(serverData);
 
-  const contactsStore = useStore<StoredContactsData>(
-    serverData || {
-      contacts: [],
-      contactsEvent: undefined,
-    },
-  );
+  useTask$(async ({ track }) => {
+    if (isServer) return;
 
-  useVisibleTask$(
-    async ({ track }) => {
-      const newActiveAccount = track(activeAccount).activeAccount;
+    // NOTE: This task tracks the activeAccount and updates the contactsStore based on the active account's pubkey.
+    const newActiveAccount = track(activeAccount).activeAccount;
 
-      if (!newActiveAccount?.pubkey) {
-        return;
-      }
+    if (!newActiveAccount?.pubkey) {
+      return;
+    }
 
-      const response = await fetch(`/contacts?user=${newActiveAccount.pubkey}`);
+    const serverStorePathBuilderFn = await serverStorePathBuilder?.resolve();
+
+    if (serverStorePathBuilderFn) {
+      const response = await fetch(
+        serverStorePathBuilderFn(newActiveAccount.pubkey),
+      );
       const data = await response.json();
 
       if (data) {
         contactsStore.contacts = data.contacts;
         contactsStore.contactsEvent = data.contactsEvent;
       }
-    },
-    { strategy: "document-ready" },
-  );
+    }
+  });
 
-  useVisibleTask$(
-    async ({ track }) => {
-      const newContacts = track(contactsStore);
-      const newActiveAccount = track(activeAccount).activeAccount;
+  useTask$(async ({ track }) => {
+    if (isServer) return;
 
-      if (!newActiveAccount?.pubkey) {
-        return;
-      }
+    // NOTE: This task tracks changes to contactsStore to persist contacts data to the server and cookies.
+    // TODO: check if changed
+    const newContacts = track(contactsStore);
+    const activePubkey = activeAccount.value?.activeAccount?.pubkey;
 
-      await fetch(`/contacts?user=${newActiveAccount.pubkey}`, {
+    if (!activePubkey) {
+      return;
+    }
+
+    const dataToStore = JSON.stringify(newContacts);
+
+    Cookies.set(CONTACTS_COOKIE_NAME, JSON.stringify(dataToStore));
+
+    const serverStorePathBuilderFn = await serverStorePathBuilder?.resolve();
+
+    if (serverStorePathBuilderFn)
+      await fetch(serverStorePathBuilderFn(activePubkey), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(newContacts),
+        body: dataToStore,
       });
-    },
-    { strategy: "document-ready" },
-  );
+  });
 
   useContextProvider(ContactsContext, contactsStore);
 }

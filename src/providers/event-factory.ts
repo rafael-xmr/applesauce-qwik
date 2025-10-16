@@ -5,7 +5,7 @@ import {
   useContextProvider,
   useSerializer$,
 } from "@qwik.dev/core";
-import { EventFactory } from "applesauce-factory";
+import { EventFactory } from "applesauce-factory/event-factory";
 
 export const EventFactoryContext = createContextId<
   Signal<EventFactory | undefined>

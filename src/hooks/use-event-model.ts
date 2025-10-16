@@ -1,5 +1,6 @@
 import {
   type ComputedSignal,
+  isServer,
   type NoSerialize,
   noSerialize,
   type QRL,
@@ -7,12 +8,9 @@ import {
   useResource$,
   useSignal,
   useTask$,
-  useVisibleTask$,
 } from "@qwik.dev/core";
-import {
-  type ModelConstructor,
-  withImmediateValueOrDefault,
-} from "applesauce-core";
+import type { ModelConstructor } from "applesauce-core/event-store";
+import { withImmediateValueOrDefault } from "applesauce-core/observable";
 import {
   catchError,
   lastValueFrom,
@@ -49,34 +47,30 @@ export function useEventModel<T, Args extends Array<any>>(
   });
 
   const clientResult = useSignal<T | undefined>(undefined);
-  const shouldGetClientResult = useSignal();
   const shouldUseClientResult = useSignal();
 
-  useVisibleTask$(
-    ({ track, cleanup }) => {
-      const newObservableSubject = track(observableSubject);
+  useTask$(({ track, cleanup }) => {
+    const newObservableSubject = track(observableSubject);
 
-      if (newObservableSubject && shouldGetClientResult.value) {
-        shouldUseClientResult.value = true;
+    if (isServer) return;
 
-        const sub = newObservableSubject.subscribe({
-          next: (p) => {
-            clientResult.value = p;
-          },
-          error: () => {
-            clientResult.value = undefined;
-          },
-        });
+    if (newObservableSubject) {
+      shouldUseClientResult.value = true;
 
-        cleanup(() => {
-          sub.unsubscribe();
-        });
-      }
+      const sub = newObservableSubject.subscribe({
+        next: (p) => {
+          clientResult.value = p;
+        },
+        error: () => {
+          clientResult.value = undefined;
+        },
+      });
 
-      shouldGetClientResult.value = true;
-    },
-    { strategy: "document-ready" },
-  );
+      cleanup(() => {
+        sub.unsubscribe();
+      });
+    }
+  });
 
   return useResource$(async ({ track }) => {
     const newClientResult = track(clientResult);
