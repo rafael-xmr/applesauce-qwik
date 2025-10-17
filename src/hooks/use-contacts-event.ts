@@ -1,42 +1,26 @@
 import { useComputed$, useContext } from "@qwik.dev/core";
-import {
-  addRelayHintsToPointer,
-  parseCoordinate,
-} from "applesauce-core/helpers/pointers";
 import { kinds } from "nostr-tools";
-import {
-  AccountManagerContext,
-  ContactsContext,
-  RelayPoolContext,
-} from "../providers";
+import { AccountManagerContext, ContactsContext } from "../providers";
 import useReplaceableEvent from "./use-replaceable-event";
 
 export function useContactsEvent() {
   const accountManagerCtx = useContext(AccountManagerContext);
-  const relayPoolCtx = useContext(RelayPoolContext);
   const contactsCtx = useContext(ContactsContext);
 
   const pubkey = useComputed$(
     () => accountManagerCtx.value.activeAccount?.pubkey,
   );
 
-  const pointer = useComputed$(() => {
-    const coord = parseCoordinate(`${kinds.Contacts}:${pubkey.value}`);
-
-    if (!!contactsCtx.contactsEvent) {
+  const coord = useComputed$(() => {
+    if (contactsCtx.contactsEvent) {
       // NOTE: no pointer if we have a stored contacts event, useReplaceableEvent will return the stored contacts
       return undefined;
     }
 
-    return (
-      (!!pubkey.value &&
-        !!coord &&
-        addRelayHintsToPointer(coord, relayPoolCtx.value.readRelays)) ||
-      undefined
-    );
+    return pubkey.value && `${kinds.Contacts}:${pubkey.value}`;
   });
 
-  const listEvent = useReplaceableEvent(pointer, {}, contactsCtx.contactsEvent);
+  const listEvent = useReplaceableEvent(coord, {}, contactsCtx.contactsEvent);
 
   return listEvent;
 }

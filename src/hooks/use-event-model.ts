@@ -4,6 +4,7 @@ import {
   type NoSerialize,
   noSerialize,
   type QRL,
+  useComputed$,
   useContext,
   useResource$,
   useSignal,
@@ -19,15 +20,22 @@ import {
   of,
   timeout,
 } from "rxjs";
+import { EventLoadersContext } from "~/providers/relay-pool.js";
 import { EventStoreContext } from "../providers/event-store.js";
 
 /** Runs and subscribes to a model on the event store */
 export function useEventModel<T, Args extends Array<any>>(
   factory: ComputedSignal<NoSerialize<QRL<ModelConstructor<T, Args>>>>,
+  coord: ComputedSignal<string | undefined>,
   args: Args,
   defaultValue?: T,
 ) {
   const eventStore = useContext(EventStoreContext);
+  const eventLoadersCtx = useContext(EventLoadersContext);
+
+  const isLoadingEvent = useComputed$(
+    () => coord.value && !!eventLoadersCtx[coord.value],
+  );
 
   const observableSubject =
     useSignal<NoSerialize<Observable<T | undefined> | undefined>>();
@@ -57,6 +65,10 @@ export function useEventModel<T, Args extends Array<any>>(
     if (newObservableSubject) {
       shouldUseClientResult.value = true;
 
+      if (!coord.value || isLoadingEvent.value) return;
+
+      eventLoadersCtx[coord.value] = true;
+
       const sub = newObservableSubject.subscribe({
         next: (p) => {
           clientResult.value = p;
@@ -68,12 +80,20 @@ export function useEventModel<T, Args extends Array<any>>(
 
       cleanup(() => {
         sub.unsubscribe();
+
+        if (coord.value && eventLoadersCtx[coord.value]) {
+          delete eventLoadersCtx[coord.value];
+        }
       });
     }
   });
 
   return useResource$(async ({ track }) => {
     const newClientResult = track(clientResult);
+
+    if (coord.value && eventLoadersCtx[coord.value]) {
+      delete eventLoadersCtx[coord.value];
+    }
 
     if (newClientResult) return newClientResult;
     if (!observableSubject.value) return undefined;

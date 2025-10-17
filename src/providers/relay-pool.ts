@@ -35,6 +35,10 @@ export const RelayPoolContext = createContextId<Signal<RelayPoolContextType>>(
   "applesauce.relay-pool",
 );
 
+export const EventLoadersContext = createContextId<{ [key: string]: any }>(
+  "applesauce.event-loaders",
+);
+
 export const RelaysStoreContext =
   createContextId<StoredRelayData>("relays-store");
 
@@ -45,6 +49,8 @@ export function useRelayPoolProvider(cookie?: string | undefined) {
     "relays" in parsedCookie ? parsedCookie : { relays: {} };
 
   const storedData = useStore<StoredRelayData>(serverData);
+
+  const eventLoadersStore = useStore<{ [key: string]: any }>({});
 
   const relayPoolSignal = useSerializer$<RelayPoolContextType, StoredRelayData>(
     () => ({
@@ -96,4 +102,5 @@ export function useRelayPoolProvider(cookie?: string | undefined) {
 
   useContextProvider(RelayPoolContext, relayPoolSignal);
   useContextProvider(RelaysStoreContext, storedData);
+  useContextProvider(EventLoadersContext, eventLoadersStore);
 }

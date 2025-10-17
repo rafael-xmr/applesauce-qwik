@@ -8,7 +8,10 @@ import {
   useContext,
 } from "@qwik.dev/core";
 import type { ModelConstructor } from "applesauce-core/event-store";
-import type { AddressPointerWithoutD } from "applesauce-core/helpers/pointers";
+import {
+  addRelayHintsToPointer,
+  parseCoordinate,
+} from "applesauce-core/helpers/pointers";
 import {
   type AddressLoaderOptions,
   createAddressLoader,
@@ -39,13 +42,24 @@ export function useAddressLoader(opts: AddressLoaderOptions = {}) {
 }
 
 export function useAddressableQuery(
-  pointer: ComputedSignal<AddressPointerWithoutD | undefined | null>,
+  coord: ComputedSignal<string | undefined>,
   opts: AddressLoaderOptions = {},
 ): ComputedSignal<
   NoSerialize<QRL<ModelConstructor<NostrEvent | undefined, []>>>
 > {
   const eventStoreCtx = useContext(EventStoreContext);
   const addressLoader = useAddressLoader(opts);
+  const relayPoolCtx = useContext(RelayPoolContext);
+
+  const pointer = useComputed$(() => {
+    const pointer = coord.value && parseCoordinate(coord.value);
+
+    return (
+      (!!pointer &&
+        addRelayHintsToPointer(pointer, relayPoolCtx.value.readRelays)) ||
+      undefined
+    );
+  });
 
   return useComputed$(() => {
     const addressLoaderValue = addressLoader.value;
