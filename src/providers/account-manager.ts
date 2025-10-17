@@ -194,16 +194,18 @@ export function useAccountsProvider(
   }));
 
   useTask$(async ({ track }) => {
-    // NOTE: This task runs on the client and syncs resolvedProfile to/from the server when changes occur.
-    if (isServer) return;
-
     const newAccountManagerSerializerSignal = track(
       accountManagerSerializerSignal,
     );
+
+    // NOTE: This task runs on the client and syncs resolvedProfile to/from the server when changes occur.
+    if (isServer) return;
+
     const newStoredData = track(storedData);
     const serverStorePathBuilderFn = await serverStorePathBuilder?.resolve();
 
     const newResolvedProfile = newStoredData.resolvedProfile;
+
 
     if (newResolvedProfile?.pubkey && serverStorePathBuilderFn) {
       await fetch(serverStorePathBuilderFn(newResolvedProfile.pubkey), {
