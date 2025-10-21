@@ -79,11 +79,11 @@ Then visit [http://localhost:8080/](http://localhost:8080/)
 - [X] NIP-01
 - [X] NIP-02
 - [ ] NIP-03
-- ~[ ] NIP-04~ - deprecated. unplanned
+- [ ] ~NIP-04~ - deprecated. unplanned
 - [ ] NIP-05
 - [ ] NIP-06
 - [X] NIP-07
-- ~[ ] NIP-08~ - deprecated. unplanned
+- [ ] ~NIP-08~ - deprecated. unplanned
 - [ ] NIP-09
 - [ ] NIP-10
 - [ ] NIP-11
@@ -98,7 +98,7 @@ Then visit [http://localhost:8080/](http://localhost:8080/)
 - [ ] NIP-23
 - [ ] NIP-24
 - [ ] NIP-25
-- ~[ ] NIP-26~ - unrecommended. unplanned
+- [ ] ~NIP-26~ - unrecommended. unplanned
 - [ ] NIP-27
 - [ ] NIP-28
 - [ ] NIP-29
@@ -126,11 +126,11 @@ Then visit [http://localhost:8080/](http://localhost:8080/)
 - [ ] NIP-54
 - [ ] NIP-55
 - [ ] NIP-56
-- ~[ ] NIP-57~ - lightning/ecash bloat. unplanned
+- [ ] ~NIP-57~ - lightning/ecash bloat. unplanned
 - [ ] NIP-58
 - [ ] NIP-59
-- ~[ ] NIP-60~ - lightning/ecash bloat. unplanned
-- ~[ ] NIP-61~ - lightning/ecash bloat. unplanned
+- [ ] ~NIP-60~ - lightning/ecash bloat. unplanned
+- [ ] ~NIP-61~ - lightning/ecash bloat. unplanned
 - [ ] NIP-62
 - [ ] NIP-64
 - [ ] NIP-65
@@ -141,7 +141,7 @@ Then visit [http://localhost:8080/](http://localhost:8080/)
 - [ ] NIP-71
 - [ ] NIP-72
 - [ ] NIP-73
-- ~[ ] NIP-75~ - lightning/ecash bloat. unplanned
+- [ ] ~NIP-75~ - lightning/ecash bloat. unplanned
 - [ ] NIP-77
 - [ ] NIP-78
 - [ ] NIP-7D
