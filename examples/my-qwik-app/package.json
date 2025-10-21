@@ -20,15 +20,16 @@
 		"qwik": "qwik"
 	},
 	"devDependencies": {
-		"applesauce-qwik": "link:applesauce-qwik",
+		"@modular-forms/qwik": "^0.29.1",
+		"@qwik.dev/core": "2.0.0-beta.11",
+		"@qwik.dev/router": "2.0.0-beta.11",
 		"@types/node": "20.19.0",
+		"applesauce-qwik": "link:applesauce-qwik",
 		"globals": "16.3.0",
 		"lmdb": "^3.4.3",
 		"typescript": "5.4.5",
 		"typescript-plugin-css-modules": "latest",
 		"vite": "7.1.4",
-		"vite-tsconfig-paths": "^4.2.1",
-		"@qwik.dev/router": "2.0.0-beta.11",
-		"@qwik.dev/core": "2.0.0-beta.11"
+		"vite-tsconfig-paths": "^4.2.1"
 	}
 }

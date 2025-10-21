@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+.error-label {
+	@apply text-red-600 font-medium mb-2;
+}
+
+.nostr-one {
+	@apply flex items-center justify-center gap-2 rounded-lg bg-purple-700 px-[19px] py-3 text-base font-medium text-white transition-colors duration-200 hover:bg-purple-800 disabled:cursor-not-allowed disabled:bg-purple-300;
+}
+
+.nostr-one:hover:not(:disabled) {
+	@apply bg-purple-800;
+}
+
+.nostr-one:disabled {
+	@apply bg-purple-300 cursor-not-allowed;
+}
+
+.nostr-one .icon {
+	@apply w-5 h-5;
+}

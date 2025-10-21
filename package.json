@@ -1,62 +1,67 @@
 {
-	"name": "applesauce-qwik",
-	"version": "0.1.0",
-	"description": "Qwik utilities for applesauce",
-	"main": "./lib/index.qwik.mjs",
-	"qwik": "./lib/index.qwik.mjs",
-	"types": "./lib-types/index.d.ts",
-	"exports": {
-		".": {
-			"types": "./lib-types/index.d.ts",
-			"import": "./lib/index.qwik.mjs",
-			"require": "./lib/index.qwik.cjs"
-		}
-	},
-	"files": [
-		"lib",
-		"lib-types"
-	],
-	"engines": {
-		"node": "^18.17.0 || ^20.3.0 || >=21.0.0"
-	},
-	"private": false,
-	"sideEffects": false,
-	"type": "module",
-	"scripts": {
-		"build": "qwik build",
-		"build.lib": "bun run build.types && vite build --mode lib",
-		"build.types": "tsc --emitDeclarationOnly",
-		"dev": "vite --mode ssr",
-		"dev.debug": "node --inspect-brk ./node_modules/vite/bin/vite.js --mode ssr --force",
-		"release": "np",
-		"start": "vite --open --mode ssr",
-		"test": "echo \"No test specified\" && exit 0",
-		"qwik": "qwik"
-	},
-	"dependencies": {
-		"@types/hash-sum": "^1.0.2",
-		"@types/js-cookie": "^3.0.6",
-		"applesauce-accounts": "link:applesauce-accounts",
-		"applesauce-actions": "link:applesauce-actions",
-		"applesauce-content": "link:applesauce-content",
-		"applesauce-core": "link:applesauce-core",
-		"applesauce-factory": "link:applesauce-factory",
-		"applesauce-loaders": "link:applesauce-loaders",
-		"applesauce-relay": "link:applesauce-relay",
-		"applesauce-signers": "link:applesauce-signers",
-		"nostr-tools": "^2.17.0",
-		"rxjs": "^7.8.2"
-	},
-	"devDependencies": {
-		"@qwik.dev/core": "^2.0.0-beta.11",
-		"@qwik.dev/router": "^2.0.0-beta.11",
-		"@types/node": "20.19.0",
-		"globals": "16.3.0",
-		"hash-sum": "^2.0.0",
-		"js-cookie": "^3.0.5",
-		"np": "^8.0.4",
-		"typescript": "5.4.5",
-		"vite": "7.1.4",
-		"vite-tsconfig-paths": "^4.2.1"
-	}
+  "name": "applesauce-qwik",
+  "version": "0.1.0",
+  "description": "Qwik utilities for applesauce",
+  "main": "./lib/index.qwik.mjs",
+  "qwik": "./lib/index.qwik.mjs",
+  "types": "./lib-types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib-types/index.d.ts",
+      "import": "./lib/index.qwik.mjs",
+      "require": "./lib/index.qwik.cjs"
+    }
+  },
+  "files": [
+    "lib",
+    "lib-types"
+  ],
+  "engines": {
+    "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
+  },
+  "private": false,
+  "sideEffects": false,
+  "type": "module",
+  "scripts": {
+    "build": "qwik build",
+    "build.lib": "bun run build.types && vite build --mode lib",
+    "build.types": "tsc --emitDeclarationOnly",
+    "dev": "vite --mode ssr",
+    "dev.debug": "node --inspect-brk ./node_modules/vite/bin/vite.js --mode ssr --force",
+    "release": "np",
+    "start": "vite --open --mode ssr",
+    "test": "echo \"No test specified\" && exit 0",
+    "qwik": "qwik"
+  },
+  "devDependencies": {
+    "@modular-forms/qwik": "^0.29.1",
+    "@qwik.dev/core": "^2.0.0-beta.11",
+    "@qwik.dev/router": "^2.0.0-beta.11",
+    "@tailwindcss/vite": "^4.1.15",
+    "@types/hash-sum": "^1.0.2",
+    "@types/js-cookie": "^3.0.6",
+    "@types/node": "20.19.0",
+    "applesauce-accounts": "link:applesauce-accounts",
+    "applesauce-actions": "link:applesauce-actions",
+    "applesauce-content": "link:applesauce-content",
+    "applesauce-core": "link:applesauce-core",
+    "applesauce-factory": "link:applesauce-factory",
+    "applesauce-loaders": "link:applesauce-loaders",
+    "applesauce-relay": "link:applesauce-relay",
+    "applesauce-signers": "link:applesauce-signers",
+    "autoprefixer": "^10.4.14",
+    "globals": "16.3.0",
+    "hash-sum": "^2.0.0",
+    "js-cookie": "^3.0.5",
+    "nostr-tools": "^2.17.0",
+    "np": "^8.0.4",
+    "postcss": "^8.4.31",
+    "postcss-preset-env": "^9.1.0",
+    "rxjs": "^7.8.2",
+    "tailwindcss": "^4.1.15",
+    "typescript": "5.4.5",
+    "valibot": "^1.1.0",
+    "vite": "7.1.4",
+    "vite-tsconfig-paths": "^4.2.1"
+  }
 }

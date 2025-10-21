@@ -1,3 +1,5 @@
+export * from "./event-search-input";
+export * from "./extension-authenticator";
 export * from "./extension-signer";
 export * from "./following-count";
 export * from "./following-timeline";

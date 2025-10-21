@@ -1,5 +1,5 @@
 export interface StoredRelays {
-  [name: string]: {
+  [url: string]: {
     read: boolean;
     write: boolean;
   };
@@ -8,12 +8,12 @@ export interface StoredRelays {
 export function getReadAndWriteRelayLists(relays: StoredRelays) {
   const readRelays = [];
   const writeRelays = [];
-  for (const [name, relay] of Object.entries(relays)) {
+  for (const [url, relay] of Object.entries(relays)) {
     if (relay.read) {
-      readRelays.push(name);
+      readRelays.push(url);
     }
     if (relay.write) {
-      writeRelays.push(name);
+      writeRelays.push(url);
     }
   }
   return { readRelays, writeRelays };
