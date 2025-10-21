@@ -73,3 +73,92 @@ bun serve
 ```
 
 Then visit [http://localhost:8080/](http://localhost:8080/)
+
+## Supported NIPs
+
+- [X] NIP-01
+- [X] NIP-02
+- [ ] NIP-03
+~- [ ] NIP-04~ - deprecated. unplanned
+- [ ] NIP-05
+- [ ] NIP-06
+- [X] NIP-07
+~- [ ] NIP-08~ - deprecated. unplanned
+- [ ] NIP-09
+- [ ] NIP-10
+- [ ] NIP-11
+- [ ] NIP-13
+- [ ] NIP-14
+- [ ] NIP-15
+- [ ] NIP-17
+- [ ] NIP-18
+- [X] NIP-19
+- [ ] NIP-21
+- [ ] NIP-22
+- [ ] NIP-23
+- [ ] NIP-24
+- [ ] NIP-25
+~- [ ] NIP-26~ - unrecommended. unplanned
+- [ ] NIP-27
+- [ ] NIP-28
+- [ ] NIP-29
+- [ ] NIP-30
+- [ ] NIP-31
+- [ ] NIP-32
+- [ ] NIP-34
+- [ ] NIP-35
+- [ ] NIP-36
+- [ ] NIP-37
+- [ ] NIP-38
+- [ ] NIP-39
+- [ ] NIP-40
+- [ ] NIP-42
+- [ ] NIP-44
+- [ ] NIP-45
+- [ ] NIP-46
+- [ ] NIP-47
+- [ ] NIP-48
+- [ ] NIP-49
+- [ ] NIP-50
+- [ ] NIP-51
+- [ ] NIP-52
+- [ ] NIP-53
+- [ ] NIP-54
+- [ ] NIP-55
+- [ ] NIP-56
+~- [ ] NIP-57~ - lightning/ecash bloat. unplanned
+- [ ] NIP-58
+- [ ] NIP-59
+~- [ ] NIP-60~ - lightning/ecash bloat. unplanned
+~- [ ] NIP-61~ - lightning/ecash bloat. unplanned
+- [ ] NIP-62
+- [ ] NIP-64
+- [ ] NIP-65
+- [ ] NIP-66
+- [ ] NIP-68
+- [ ] NIP-69
+- [ ] NIP-70
+- [ ] NIP-71
+- [ ] NIP-72
+- [ ] NIP-73
+~- [ ] NIP-75~ - lightning/ecash bloat. unplanned
+- [ ] NIP-77
+- [ ] NIP-78
+- [ ] NIP-7D
+- [ ] NIP-84
+- [ ] NIP-86
+- [ ] NIP-87
+- [ ] NIP-88
+- [ ] NIP-89
+- [ ] NIP-90
+- [ ] NIP-92
+- [ ] NIP-94
+- [ ] NIP-96
+- [ ] NIP-98
+- [ ] NIP-99
+- [ ] NIP-A0
+- [ ] NIP-B0
+- [ ] NIP-B7
+- [ ] NIP-C0
+- [ ] NIP-C7
+- [ ] NIP-EE
